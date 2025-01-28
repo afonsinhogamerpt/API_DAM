@@ -94,6 +94,22 @@ def login(password: str = Body(...), email: str  = Body(...), db: Session = Depe
 def addBook(nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)):
     db.execute(text('INSERT INTO Livros ( titulo, dataemissao, editora, descricao, rating, ISBN, paginas) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas)'), { "nome": nome,"dataemissao": dataemissao,"editora": editora, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas})
     db.commit()
+
+
+
+@app.get("/colecoes/")
+def get_colecoes(userid: int, db: Session = Depends(get_db)):
+    query = text('''
+        SELECT c.*
+        FROM Colecoes c
+        JOIN Utilizadores_Colecoes uc ON uc.colecoesid = c.idcolecoes
+        WHERE uc.userid = :userid
+    ''')
     
 
+    result = db.execute(query, {"userid": userid}).fetchall()
+
+    colecoes = [{"idcolecoes": r[0], "nome": r[1], "isPublic": r[2]} for r in result]
+
+    return {"colecoes": colecoes}
 
