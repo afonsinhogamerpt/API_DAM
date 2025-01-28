@@ -23,10 +23,13 @@ app.add_middleware(
 
 
 @app.get('/users/')
-def getUsers(db: Session = Depends(get_db)):
-    users = []
-    users.append(db.query(Utilizadores).all())
-    return users
+def getUsers(email: str, db: Session = Depends(get_db)):
+    user = db.query(Utilizadores.email).filter(Utilizadores.email == email).first()
+    
+    if user is None:
+        return "Não foram encontrados utilizadores"
+    else:
+        return user[0]
 
 
 @app.post('/users/') #AKA REGISTO
