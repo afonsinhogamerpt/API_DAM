@@ -24,12 +24,12 @@ app.add_middleware(
 
 @app.get('/users/')
 def getUsers(email: str, db: Session = Depends(get_db)):
-    user = db.query(Utilizadores.email).filter(Utilizadores.email == email).first()
-    
-    if user is None:
+    users = []
+    users.append(db.query(Utilizadores.email).filter(Utilizadores.email == email).first())
+    if users is None:
         return "Não foram encontrados utilizadores"
     else:
-        return user[0]
+        return users
 
 
 @app.post('/users/') #AKA REGISTO
@@ -91,8 +91,8 @@ def login(password: str = Body(...), email: str  = Body(...), db: Session = Depe
 
 
 @app.post('/livros/')
-def addBook(idlivros: int = Body(...), nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)):
-    db.execute(text('INSERT INTO Livros (idlivros, nome, dataemissao, editora, descricao, rating, ISBNM, paginas) VALUES (:idlivros, :nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas)'), {"idlivros": idlivros, "nome": nome,"dataemissao": dataemissao,"editora": editora, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas})
+def addBook(nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)):
+    db.execute(text('INSERT INTO Livros ( titulo, dataemissao, editora, descricao, rating, ISBN, paginas) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas)'), { "nome": nome,"dataemissao": dataemissao,"editora": editora, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas})
     db.commit()
     
 

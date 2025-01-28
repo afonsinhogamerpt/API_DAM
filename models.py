@@ -14,7 +14,7 @@ class Utilizadores(Base):
 class Livros(Base):
     __tablename__ = "Livros"
 
-    idlivros = Column(Integer, primary_key=True, index=True)
+    idlivros = Column(Integer, primary_key=True, index=True, autoincrement=True)
     titulo = Column(String(255), nullable=False)
     ISBN = Column(String(255), nullable=False)
     dataemissao = Column(String(255), nullable=False)
@@ -25,7 +25,7 @@ class Livros(Base):
 class Colecoes(Base):
     __tablename__= "Colecoes"
 
-    idcolecoes = Column(Integer, primary_key=True, index=True)
+    idcolecoes = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nome = Column(String(255), nullable=False)
     isPublic = Column(Boolean, nullable=False)
 
