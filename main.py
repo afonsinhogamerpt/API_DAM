@@ -102,10 +102,10 @@ def login(password: str = Body(...), email: str  = Body(...), db: Session = Depe
 
 
 @app.post('/users/{userid}/livros')
-def addBook(userid: int , nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), url: str = Body(...), db: Session = Depends(get_db)):
+def addBook(userid: int , nome: str = Body(...), dataemissao: str = Body(...), autor: str = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), url: str = Body(...), db: Session = Depends(get_db)):
     #isto vai buscar o id da colecao associado ao userid
     result = db.execute(text('SELECT colecoesid FROM Utilizadores_Colecoes WHERE userid = :userid'), {"userid": userid}).first()
-    db.execute(text('INSERT INTO Livros ( titulo, dataemissao, editora, descricao, rating, ISBN, paginas, url) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas, :url)'), { "nome": nome,"dataemissao": dataemissao,"editora": editora, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas, "url": url})
+    db.execute(text('INSERT INTO Livros ( titulo, dataemissao, autor, descricao, rating, ISBN, paginas, url) VALUES (:nome, :dataemissao, :autor, :descricao, :rating, :ISBN, :paginas, :url)'), { "nome": nome,"dataemissao": dataemissao,"autor": autor, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas, "url": url})
     
     idlivros = db.execute(text('SELECT idlivros FROM Livros WHERE ISBN = :ISBN'), {"ISBN": ISBN}).first()
     db.execute(text('INSERT INTO Colecoes_Livros (colecoesid, idlivros) VALUES (:idcolecoes, :idlivros)'), {"idcolecoes": result[0], "idlivros": idlivros[0]})
@@ -115,7 +115,7 @@ def addBook(userid: int , nome: str = Body(...), dataemissao: str = Body(...), e
 @app.post('/users/{user_id}/livros')
 def add_book(
     user_id: int,
-    nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)
+    nome: str = Body(...), dataemissao: str = Body(...), editora: str = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)
 ):
 
     result = db.execute(text('SELECT colecoesid FROM Utilizadores_Colecoes WHERE userid = :user_id'),{"user_id": user_id})
@@ -180,7 +180,7 @@ def get_books_for_collection(user_id: int, collection_id: int, db: Session = Dep
         livro = db.execute(text('SELECT * FROM Livros WHERE idlivros = :idlivros'),{"idlivros": id}).first() 
 
         if livro:
-            ok = {"idlivros": livro[0], "titulo": livro[1], "isbn": livro[2], "dataemissao": livro[3], "editora": livro[4], "descricao": livro[5], "rating": livro[6], "paginas": livro[7], "url": livro[8] }
+            ok = {"idlivros": livro[0], "titulo": livro[1], "isbn": livro[2], "dataemissao": livro[3], "descricao": livro[4], "rating": livro[5], "paginas": livro[6], "url": livro[7], "autor": livro[8] }
             arr.append(ok)     
     return {"mensagem": arr}
     
