@@ -10,6 +10,7 @@ from sqlalchemy import text
 from database import get_db
 import hashlib
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 
@@ -22,14 +23,18 @@ app.add_middleware(
 )
 
 
-@app.get('/users/')
+@app.get("/users/")
 def getUsers(email: str, db: Session = Depends(get_db)):
-    users = []
-    users.append(db.query(Utilizadores.email).filter(Utilizadores.email == email).first())
-    if users is None:
+    user = db.query(Utilizadores.email, Utilizadores.nome, Utilizadores.apelido).filter(Utilizadores.email == email).first()
+    if user is None:
         return "Não foram encontrados utilizadores"
     else:
-        return users
+        return   {
+            "nome": user.nome,
+            "apelido": user.apelido,
+            "email": user.email
+        }
+    
 
 
 @app.post('/users/') #AKA REGISTO
@@ -55,17 +60,21 @@ def addUser( nome: str = Body(...), apelido: str = Body(...), email: str = Body(
         db.commit()
 
 
-@app.delete('/users/')
+@app.delete('/users/delete')
 def deleteUser(userid: int, db: Session = Depends(get_db)):
+    db.execute(text('DELETE FROM Utilizadores_Colecoes WHERE userid = :userid'), {"userid":userid})
     db.execute(text('DELETE FROM Utilizadores WHERE userid = :userid'),{"userid":userid})
     db.commit()
 
-@app.put('/users/')
-def updateUser(userid: int = Body(...), nome: str = Body(...), apelido: str = Body(...), email: str = Body(...), db: Session = Depends(get_db)):
+@app.put('/users/update')
+def updateUser( userid: int = Body(...) ,nome: str = Body(...), apelido: str = Body(...), email: str = Body(...), password: str = Body(...), db: Session = Depends(get_db)):
    
-    if (nome!= Utilizadores.nome or apelido!= Utilizadores.apelido or email!= Utilizadores.email):
-        db.execute(text('UPDATE Utilizadores SET nome = :nome , apelido = :apelido ,  email = :email WHERE userid = :userid'), {"nome":nome, "apelido": apelido, "email": email, "userid": userid})
+    md5 = hashlib.md5()
+    md5.update(password.encode())
+    if (nome!= Utilizadores.nome or apelido!= Utilizadores.apelido or email!= Utilizadores.email or md5.hexdigest() != Utilizadores.password):
+        db.execute(text('UPDATE Utilizadores SET nome = :nome , apelido = :apelido ,  email = :email WHERE userid = :userid'), {"nome":nome, "apelido": apelido, "email": email, "userid":userid})
         db.commit()
+
 
 @app.put('/password')
 def updatePassword(password: str = Body(...), userid: int = Body(...) , db: Session = Depends(get_db)):
@@ -81,11 +90,13 @@ def login(password: str = Body(...), email: str  = Body(...), db: Session = Depe
     md5 = hashlib.md5()
     md5.update(password.encode())
     
+    nomeQuery = db.query(Utilizadores.nome).filter(Utilizadores.email == email).first()
+    idQuery = db.query(Utilizadores.userid).filter(Utilizadores.email == email).first()
     emailQuery = db.query(Utilizadores).filter(Utilizadores.email == email).first()
     passwordQuery = db.query(Utilizadores).filter(Utilizadores.password == md5.hexdigest()).first() # o first vai buscar a primeira row que corresponder ao que é pedido no WHERE ou Noke se não houver nenhuma row
     
     if emailQuery != None and passwordQuery != None:
-        return "Success"
+        return {"userid": idQuery[0], "nome":nomeQuery[0]}
     else:
         return "Error"
 
