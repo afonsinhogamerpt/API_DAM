@@ -101,9 +101,14 @@ def login(password: str = Body(...), email: str  = Body(...), db: Session = Depe
         return "Error"
 
 
-@app.post('/livros/')
-def addBook(nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)):
+@app.post('/users/{userid}/livros')
+def addBook(userid: int , nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)):
+    #isto vai buscar o id da colecao associado ao userid
+    result = db.execute(text('SELECT colecoesid FROM Utilizadores_Colecoes WHERE userid = :userid'), {"userid": userid}).first()
     db.execute(text('INSERT INTO Livros ( titulo, dataemissao, editora, descricao, rating, ISBN, paginas) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas)'), { "nome": nome,"dataemissao": dataemissao,"editora": editora, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas})
+    
+    idlivros = db.execute(text('SELECT idlivros FROM Livros WHERE ISBN = :ISBN'), {"ISBN": ISBN}).first()
+    db.execute(text('INSERT INTO Colecoes_Livros (colecoesid, idlivros) VALUES (:idcolecoes, :idlivros)'), {"idcolecoes": result[0], "idlivros": idlivros[0]})
     db.commit()
 
 
@@ -113,21 +118,12 @@ def add_book(
     nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)
 ):
 
-    result = db.execute(
-        text('SELECT colecoesid FROM Utilizadores_Colecoes WHERE userid = :user_id'),
-        {"user_id": user_id}
-    )
+    result = db.execute(text('SELECT colecoesid FROM Utilizadores_Colecoes WHERE userid = :user_id'),{"user_id": user_id})
     collection_id = result.scalar()
     
-    if not collection_id:
-        raise HTTPException(
-            status_code=404,
-            detail="No collection found for this user"
-        )
-
-    # Insert the book and get its ID
+    
     result = db.execute(
-        text('INSERT INTO Livros (titulo, dataemissao, editora, descricao, rating, ISBN, paginas) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas)  OUTPUT INSERTED.idlivros'),
+        text('INSERT INTO Livros (titulo, dataemissao, editora, descricao, rating, ISBN, paginas) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas)'),
         {
             "nome": nome,
             "dataemissao": dataemissao,
