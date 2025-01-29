@@ -72,7 +72,7 @@ def updateUser( userid: int = Body(...) ,nome: str = Body(...), apelido: str = B
     md5 = hashlib.md5()
     md5.update(password.encode())
     if (nome!= Utilizadores.nome or apelido!= Utilizadores.apelido or email!= Utilizadores.email or md5.hexdigest() != Utilizadores.password):
-        db.execute(text('UPDATE Utilizadores SET nome = :nome , apelido = :apelido ,  email = :email WHERE userid = :userid'), {"nome":nome, "apelido": apelido, "email": email, "userid":userid})
+        db.execute(text('UPDATE Utilizadores SET nome = :nome , apelido = :apelido ,  email = :email , password =:password WHERE userid = :userid'), {"nome":nome, "apelido": apelido, "email": email, "userid":userid, "password": md5.hexdigest()})
         db.commit()
 
 
