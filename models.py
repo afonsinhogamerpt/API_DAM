@@ -19,8 +19,9 @@ class Livros(Base):
     ISBN = Column(String(255), nullable=False)
     dataemissao = Column(String(255), nullable=False)
     descricao = Column(String(255), nullable=False)
-    rating = Column(Float(255), nullable=False)
+    rating = Column(Float, nullable=False)
     paginas = Column(Integer, nullable=False) 
+    url = Column(String(255), nullable=False)
 
 class Colecoes(Base):
     __tablename__= "Colecoes"
@@ -34,3 +35,9 @@ class Utilizadores_Colecoes(Base):
 
     colecoesid = Column(Integer, primary_key=True)
     userid = Column(Integer, primary_key=True)
+
+class Colecoes_Livros(Base):
+    __tablename__ = "Colecoes_Livros"
+
+    colecoesid = Column(Integer, primary_key=True)
+    idlivros = Column(Integer, primary_key=True)

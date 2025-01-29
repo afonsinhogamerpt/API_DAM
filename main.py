@@ -102,10 +102,10 @@ def login(password: str = Body(...), email: str  = Body(...), db: Session = Depe
 
 
 @app.post('/users/{userid}/livros')
-def addBook(userid: int , nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), db: Session = Depends(get_db)):
+def addBook(userid: int , nome: str = Body(...), dataemissao: str = Body(...), editora: int = Body(...), descricao: str = Body(...), rating: float = Body(...),ISBN: str = Body(...), paginas: int = Body(...), url: str = Body(...), db: Session = Depends(get_db)):
     #isto vai buscar o id da colecao associado ao userid
     result = db.execute(text('SELECT colecoesid FROM Utilizadores_Colecoes WHERE userid = :userid'), {"userid": userid}).first()
-    db.execute(text('INSERT INTO Livros ( titulo, dataemissao, editora, descricao, rating, ISBN, paginas) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas)'), { "nome": nome,"dataemissao": dataemissao,"editora": editora, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas})
+    db.execute(text('INSERT INTO Livros ( titulo, dataemissao, editora, descricao, rating, ISBN, paginas, url) VALUES (:nome, :dataemissao, :editora, :descricao, :rating, :ISBN, :paginas, :url)'), { "nome": nome,"dataemissao": dataemissao,"editora": editora, "descricao": descricao, "rating": rating, "ISBN": ISBN, "paginas": paginas, "url": url})
     
     idlivros = db.execute(text('SELECT idlivros FROM Livros WHERE ISBN = :ISBN'), {"ISBN": ISBN}).first()
     db.execute(text('INSERT INTO Colecoes_Livros (colecoesid, idlivros) VALUES (:idcolecoes, :idlivros)'), {"idcolecoes": result[0], "idlivros": idlivros[0]})
@@ -172,28 +172,16 @@ def get_colecoes(userid: int, db: Session = Depends(get_db)):
 
 @app.get("/users/{user_id}/collections/{collection_id}/books")
 def get_books_for_collection(user_id: int, collection_id: int, db: Session = Depends(get_db)):
-    # Check if the collection belongs to the user
-    user_collection = db.query(Utilizadores_Colecoes).filter(
-        Utilizadores_Colecoes.userid == user_id,
-        Utilizadores_Colecoes.colecoesid == collection_id
-    ).first()
+    arr = []
+    teste = (db.execute(text('SELECT idlivros FROM Colecoes_Livros WHERE colecoesid = :colecoesid'), {"colecoesid": collection_id}).fetchall())
+    livros_ids = [livro.idlivros for livro in teste]
+    for id in livros_ids:
+        #aqui retorna o id topxuxa dentro do for
+        livro = db.execute(text('SELECT * FROM Livros WHERE idlivros = :idlivros'),{"idlivros": id}).first() 
 
-    if not user_collection:
-        raise HTTPException(status_code=404, detail="Collection not found for user")
-
-    # Raw SQL query to fetch books from a collection
-    query = text('''
-        SELECT l.idlivros, l.titulo, l.ISBN, l.dataemissao, l.descricao, l.rating, l.paginas
-        FROM Livros l
-        JOIN Colecoes c ON c.idcolecoes = l.idcolecao
-        WHERE c.idcolecoes = :collection_id
-    ''')
-
-    result = db.execute(query, {"collection_id": collection_id}).fetchall()
-
-    # Map the result to a list of dictionaries
-    books = [{"idlivros": r[0], "titulo": r[1], "ISBN": r[2], "dataemissao": r[3],
-              "descricao": r[4], "rating": r[5], "paginas": r[6]} for r in result]
-
-    return {"books": books}
+        if livro:
+            ok = {"idlivros": livro[0], "titulo": livro[1], "isbn": livro[2], "dataemissao": livro[3], "editora": livro[4], "descricao": livro[5], "rating": livro[6], "paginas": livro[7], "url": livro[8] }
+            arr.append(ok)     
+    return {"mensagem": arr}
+    
 
